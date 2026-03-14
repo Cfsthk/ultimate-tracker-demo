@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ultimate Frisbee Tracker - Demo</title>
+  <title>Ultimate Frisbee Tracker - Enhanced</title>
   <style>
     :root {
       --bg: #0f172a; --surface: #1e293b; --surface2: #334155;
       --border: #475569; --text: #f1f5f9; --muted: #94a3b8;
       --accent: #38bdf8; --green: #22c55e; --red: #ef4444;
-      --yellow: #facc15; --purple: #a78bfa;
+      --amber: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
@@ -34,11 +34,11 @@
     .player-chip { border-radius: 8px; padding: 10px 8px; text-align: center; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; position: relative; }
     .player-chip.male { background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #93c5fd; }
     .player-chip.female { background: rgba(236,72,153,0.2); border-color: #ec4899; color: #f9a8d4; }
-    .player-chip.selected { outline: 3px solid var(--yellow); outline-offset: 2px; }
-    .player-chip.buddy-glow { box-shadow: 0 0 0 3px var(--yellow), 0 0 12px rgba(250,204,21,0.4); }
+    .player-chip.selected { outline: 3px solid var(--amber); outline-offset: 2px; }
+    .player-chip.suggested { box-shadow: 0 0 0 3px var(--amber), 0 0 16px rgba(245,158,11,0.5); }
     .player-chip .jersey { font-size: 1.1rem; font-weight: 700; }
     .player-chip .name { font-size: 0.72rem; margin-top: 2px; }
-    .player-chip .line-badge { position: absolute; top: 4px; right: 4px; font-size: 0.65rem; background: var(--surface2); border-radius: 4px; padding: 1px 4px; }
+    .player-chip .points-badge { position: absolute; top: 4px; right: 4px; font-size: 0.65rem; background: var(--amber); color: #0f172a; border-radius: 10px; padding: 2px 5px; font-weight: 700; min-width: 18px; }
     .scoreboard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .score-team { text-align: center; }
     .score-team .team-name { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -50,16 +50,29 @@
     .gender-badge .value { font-size: 0.9rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-top: 4px; }
     .gender-badge .value.women { background: rgba(236,72,153,0.2); color: #f9a8d4; border: 1px solid #ec4899; }
     .gender-badge .value.men { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid #3b82f6; }
-    .lineup-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .lineup-slot { background: var(--surface2); border-radius: 8px; padding: 8px 6px; text-align: center; font-size: 0.78rem; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
-    .lineup-slot:hover { border-color: var(--accent); }
-    .lineup-slot.active-player { border-color: var(--yellow); background: rgba(250,204,21,0.1); }
-    .lineup-slot .slot-jersey { font-size: 1rem; font-weight: 700; }
-    .lineup-slot .slot-name { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
-    .lineup-slot.empty { border-style: dashed; color: var(--muted); font-size: 0.75rem; }
-    .action-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
-    .action-panel .panel-title { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
-    .action-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .toggle-group { display: flex; background: var(--surface2); border-radius: 8px; padding: 3px; gap: 3px; }
+    .toggle-btn { flex: 1; padding: 7px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .toggle-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .demo-tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 0; z-index: 10; }
+    .demo-tab { padding: 10px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); white-space: nowrap; transition: all 0.15s; }
+    .demo-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .demo-tab:hover { color: var(--text); }
+    .input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 0.9rem; outline: none; }
+    .input:focus { border-color: var(--accent); }
+    .label { font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; display: block; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mb-8 { margin-bottom: 8px; } .mb-12 { margin-bottom: 12px; } .mb-16 { margin-bottom: 16px; }
+    .text-muted { color: var(--muted); font-size: 0.82rem; }
+    .text-accent { color: var(--accent); }
+    .text-green { color: var(--green); } .text-red { color: var(--red); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-green { background: rgba(34,197,94,0.2); color: var(--green); border: 1px solid var(--green); }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-row label { font-size: 0.85rem; cursor: pointer; }
+    .line-section { margin-bottom: 20px; }
+    .line-section-title { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    .line-section-subtitle { font-size: 0.75rem; color: var(--accent); margin-bottom: 8px; }
     .point-log { list-style: none; }
     .point-log li { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
     .point-log li:last-child { border-bottom: none; }
@@ -69,50 +82,17 @@
     .event-icon.turn { background: rgba(239,68,68,0.2); color: var(--red); }
     .event-icon.score { background: rgba(239,68,68,0.2); color: var(--red); }
     .stats-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    .stats-table th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
-    .stats-table th:hover { color: var(--accent); }
+    .stats-table th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
     .stats-table td { padding: 8px 8px; border-bottom: 1px solid rgba(71,85,105,0.4); }
     .stats-table tr:hover td { background: rgba(255,255,255,0.02); }
-    .stats-table .highlight { color: var(--yellow); font-weight: 700; }
-    .toggle-group { display: flex; background: var(--surface2); border-radius: 8px; padding: 3px; gap: 3px; }
-    .toggle-btn { flex: 1; padding: 7px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .toggle-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; max-width: 380px; width: 100%; }
-    .modal h3 { font-size: 1rem; margin-bottom: 8px; }
-    .modal p { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
-    .modal .modal-actions { display: flex; gap: 8px; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .mb-8 { margin-bottom: 8px; } .mb-12 { margin-bottom: 12px; } .mb-16 { margin-bottom: 16px; }
-    .text-muted { color: var(--muted); font-size: 0.82rem; }
-    .text-accent { color: var(--accent); }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
-    .badge-green { background: rgba(34,197,94,0.2); color: var(--green); border: 1px solid var(--green); }
-    .input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 0.9rem; outline: none; }
-    .input:focus { border-color: var(--accent); }
-    .label { font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
+    .stats-table .highlight { color: var(--accent); font-weight: 700; }
     .gender-seq { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
     .gender-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
     .gender-dot.M { background: rgba(59,130,246,0.3); color: #93c5fd; border: 1px solid #3b82f6; }
     .gender-dot.F { background: rgba(236,72,153,0.3); color: #f9a8d4; border: 1px solid #ec4899; }
-    .divider { height: 1px; background: var(--border); margin: 14px 0; }
-    .past-game { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
-    .past-game:last-child { border-bottom: none; }
-    .past-game:hover .pg-vs { color: var(--accent); }
-    .pg-date { font-size: 0.75rem; color: var(--muted); }
-    .pg-vs { font-size: 0.88rem; font-weight: 600; transition: color 0.15s; }
-    .pg-score { font-size: 0.88rem; font-weight: 700; }
-    .notification { background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--accent); margin-bottom: 14px; }
-    .float-btn { position: fixed; bottom: 24px; right: 24px; z-index: 50; }
-    .assist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
-    .assist-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
-    .assist-chip:hover { border-color: var(--green); color: var(--green); }
-    .demo-tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 0; z-index: 10; }
-    .demo-tab { padding: 10px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); white-space: nowrap; transition: all 0.15s; }
-    .demo-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-    .demo-tab:hover { color: var(--text); }
-    .text-green { color: var(--green); } .text-red { color: var(--red); }
+    .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; background: var(--surface2); border-radius: 8px; padding: 3px; }
+    .sub-tab { flex: 1; padding: 8px; text-align: center; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; color: var(--muted); transition: all 0.15s; }
+    .sub-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
@@ -124,488 +104,756 @@
 
 <div class="demo-tabs">
   <div class="demo-tab active" onclick="showScreen('roster')">Roster</div>
-  <div class="demo-tab" onclick="showScreen('setup')">Game Setup</div>
+  <div class="demo-tab" onclick="showScreen('setup')">Setup</div>
   <div class="demo-tab" onclick="showScreen('live')">Live Game</div>
   <div class="demo-tab" onclick="showScreen('summary')">Summary</div>
 </div>
 
-<!-- ROSTER -->
+<!-- ROSTER SCREEN -->
 <div class="screen active" id="screen-roster">
   <div class="flex-between mb-16" style="margin-top:16px">
     <div>
       <div style="font-size:1.3rem;font-weight:800">FireDiscs</div>
-      <div class="text-muted">14 players &middot; Mixed</div>
+      <div class="text-muted" id="roster-info">14 players &middot; Mixed</div>
     </div>
     <button class="btn btn-primary btn-sm" onclick="showScreen('setup')">+ New Game</button>
   </div>
+  
   <div class="card">
-    <div class="card-title">Roster (14 players)</div>
+    <div class="card-title">Roster (<span id="roster-count">14</span> players)</div>
     <div class="roster-grid" id="roster-grid"></div>
   </div>
+
   <div class="card">
-    <div class="card-title">Recent Games</div>
-    <div class="past-game" onclick="showScreen('summary')">
-      <div><div class="pg-vs">vs Hurricanes</div><div class="pg-date">Mar 10, 2026</div></div>
-      <div class="pg-score text-green">13 &ndash; 9 W</div>
+    <div class="card-title">Add Player</div>
+    <div class="mb-8">
+      <label class="label">Name</label>
+      <input class="input" type="text" id="new-player-name" placeholder="Player name" />
     </div>
-    <div class="past-game" onclick="showScreen('summary')">
-      <div><div class="pg-vs">vs Spinners</div><div class="pg-date">Mar 3, 2026</div></div>
-      <div class="pg-score text-red">8 &ndash; 11 L</div>
+    <div class="mb-8">
+      <label class="label">Number</label>
+      <input class="input" type="number" id="new-player-number" placeholder="Jersey #" />
     </div>
-    <div class="past-game" onclick="showScreen('summary')">
-      <div><div class="pg-vs">vs Ghost Catchers</div><div class="pg-date">Feb 24, 2026</div></div>
-      <div class="pg-score text-green">15 &ndash; 12 W</div>
+    <div class="mb-12">
+      <label class="label">Gender</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="gender-m" onclick="setNewGender('M')">Male</button>
+        <button class="toggle-btn" id="gender-f" onclick="setNewGender('F')">Female</button>
+        <button class="toggle-btn" id="gender-x" onclick="setNewGender('X')">Other</button>
+      </div>
     </div>
+    <button class="btn btn-primary btn-full" onclick="addPlayer()">Add to Roster</button>
   </div>
 </div>
 
-<!-- GAME SETUP -->
+<!-- SETUP SCREEN -->
 <div class="screen" id="screen-setup">
   <div style="margin-top:16px;margin-bottom:16px">
     <div style="font-size:1.1rem;font-weight:700">New Game</div>
     <div class="text-muted">FireDiscs</div>
   </div>
-  <div class="card">
-    <div class="label">Opponent Name</div>
-    <input class="input" type="text" value="Hurricanes" />
+
+  <div class="sub-tabs">
+    <div class="sub-tab active" onclick="showSetupTab('squad')">Squad</div>
+    <div class="sub-tab" onclick="showSetupTab('format')">Format</div>
+    <div class="sub-tab" onclick="showSetupTab('line')">Line</div>
   </div>
-  <div class="card">
-    <div class="card-title">Starting Possession</div>
-    <div class="toggle-group">
-      <button class="toggle-btn active" id="tog-offense" onclick="togglePossession('O')">&#127944; We start on O</button>
-      <button class="toggle-btn" id="tog-defense" onclick="togglePossession('D')">&#128737; We start on D</button>
+
+  <!-- Squad Tab -->
+  <div id="setup-tab-squad">
+    <div class="card">
+      <div class="flex-between mb-8">
+        <div class="card-title" style="margin-bottom:0">Select Game Squad</div>
+        <div class="text-muted" style="font-size:0.8rem"><span id="squad-count">0</span> players</div>
+      </div>
+      <div class="text-muted mb-8" style="font-size:0.75rem">Tap roster players to add to squad</div>
+      <div class="roster-grid" id="squad-selector-grid"></div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-title">Gender Ratio Rule</div>
-    <div class="toggle-group mb-12">
-      <button class="toggle-btn active" id="tog-abba" onclick="toggleRatio('ABBA')">ABBA</button>
-      <button class="toggle-btn" id="tog-alt" onclick="toggleRatio('ALT')">Alternating</button>
-      <button class="toggle-btn" id="tog-fixed" onclick="toggleRatio('FIXED')">Fixed</button>
+
+  <!-- Format Tab -->
+  <div id="setup-tab-format" style="display:none">
+    <div class="card">
+      <label class="label">Opponent Name</label>
+      <input class="input" type="text" id="opponent-name" value="Hurricanes" />
     </div>
-    <div class="text-muted" style="font-size:0.78rem;margin-bottom:8px">Gender sequence (first 8 points):</div>
-    <div class="gender-seq" id="gender-seq-preview"></div>
+
+    <div class="card">
+      <div class="card-title">Starting Possession</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="tog-offense" onclick="togglePossession('O')">&#127944; We start on O</button>
+        <button class="toggle-btn" id="tog-defense" onclick="togglePossession('D')">&#128737; We start on D</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Gender Ratio</div>
+      <div class="toggle-group mb-12">
+        <button class="toggle-btn" id="tog-4m3f" onclick="toggleGenderRatio('4M3F')">4M 3F</button>
+        <button class="toggle-btn active" id="tog-3m4f" onclick="toggleGenderRatio('3M4F')">3M 4F</button>
+        <button class="toggle-btn" id="tog-mixed" onclick="toggleGenderRatio('MIXED')">Mixed</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Gender Sequence</div>
+      <div class="toggle-group mb-12">
+        <button class="toggle-btn active" id="tog-abba" onclick="toggleSequence('ABBA')">ABBA</button>
+        <button class="toggle-btn" id="tog-alt" onclick="toggleSequence('ALT')">Alternating</button>
+        <button class="toggle-btn" id="tog-manual" onclick="toggleSequence('MANUAL')">Manual</button>
+      </div>
+      
+      <div id="abba-options" class="mb-12">
+        <div class="checkbox-row">
+          <input type="checkbox" id="abba-female-checkbox" onchange="toggleAbbaGender()" />
+          <label for="abba-female-checkbox">A = Female (default: A = Male)</label>
+        </div>
+      </div>
+
+      <div class="text-muted" style="font-size:0.78rem;margin-bottom:8px">Gender sequence (first 8 points):</div>
+      <div class="gender-seq" id="gender-seq-preview"></div>
+    </div>
   </div>
-  <div class="card">
-    <div class="card-title">Line Assignments</div>
-    <div class="text-muted mb-8" style="font-size:0.78rem">Tap a player to cycle lines 1 / 2 / 3</div>
-    <div class="roster-grid" id="setup-roster-grid"></div>
+
+  <!-- Line Tab -->
+  <div id="setup-tab-line" style="display:none">
+    <div class="card">
+      <div class="flex-between mb-8">
+        <div class="card-title" style="margin-bottom:0">Starting Line</div>
+        <div class="text-muted" style="font-size:0.8rem"><span id="starting-line-count">0</span>/7</div>
+      </div>
+      <div class="text-muted mb-8" style="font-size:0.75rem">Tap squad members to set starting line</div>
+      <div class="roster-grid" id="starting-line-grid"></div>
+    </div>
   </div>
-  <button class="btn btn-green btn-full" onclick="showScreen('live')" style="margin-top:4px;margin-bottom:24px">Start Game &#8594;</button>
+
+  <button class="btn btn-green btn-full" onclick="startGame()" style="margin-top:4px;margin-bottom:24px">Start Game &#8594;</button>
 </div>
 
-<!-- LIVE GAME -->
+<!-- LIVE GAME SCREEN -->
 <div class="screen" id="screen-live">
   <div class="scoreboard" style="margin-top:16px">
     <div class="score-team">
       <div class="team-name">FireDiscs</div>
-      <div class="score us" id="score-us">7</div>
+      <div class="score us" id="score-us">0</div>
     </div>
     <div>
       <div class="gender-badge">
-        <div class="label">Point #<span id="point-num">9</span></div>
+        <div class="label">Point #<span id="point-num">1</span></div>
         <div class="value men" id="gender-badge">4M / 3F</div>
       </div>
     </div>
     <div class="score-team">
-      <div class="team-name">Hurricanes</div>
-      <div class="score them" id="score-them">6</div>
+      <div class="team-name" id="opponent-display">Hurricanes</div>
+      <div class="score them" id="score-them">0</div>
     </div>
   </div>
 
-  <div id="phase-selecting">
-    <div class="notification">&#128100; Select 7 players for Point #<span id="notif-pt">9</span></div>
-    <div class="card">
-      <div class="flex-between mb-8">
-        <div class="card-title" style="margin-bottom:0">Tap to select (4M + 3F)</div>
-        <div class="text-muted" style="font-size:0.8rem"><span id="sel-count">0</span>/7</div>
-      </div>
-      <div class="roster-grid" id="live-roster-grid"></div>
-    </div>
-    <button class="btn btn-green btn-full" id="start-point-btn" onclick="startPoint()" disabled>Start Point</button>
+  <div class="sub-tabs">
+    <div class="sub-tab active" onclick="showLiveTab('score')">Score</div>
+    <div class="sub-tab" onclick="showLiveTab('line')">Line</div>
+    <div class="sub-tab" onclick="showLiveTab('log')">Log</div>
   </div>
 
-  <div id="phase-point" style="display:none">
-    <div class="action-panel">
-      <div class="flex-between">
-        <div class="panel-title">Tap a player then record action</div>
-        <div class="text-muted" style="font-size:0.78rem" id="disc-pos">Disc: Alex #7</div>
-      </div>
-      <div class="lineup-grid" id="lineup-grid"></div>
-    </div>
-    <div class="action-panel">
-      <div class="panel-title">Action for <span id="action-player-name" class="text-accent">-- select a player --</span></div>
-      <div class="action-buttons">
-        <button class="btn btn-ghost" id="btn-d" onclick="recordAction('D')" disabled>&#128737; D</button>
-        <button class="btn btn-ghost" id="btn-turn" onclick="recordAction('Turnover')" disabled>&#128257; Turnover</button>
-        <button class="btn btn-green" id="btn-score" onclick="openAssist()" disabled>&#127944; Scored!</button>
-      </div>
-    </div>
+  <!-- Score Tab -->
+  <div id="live-tab-score">
     <div class="card">
-      <div class="flex-between mb-8">
-        <div class="card-title" style="margin-bottom:0">They Scored</div>
-        <button class="btn btn-red btn-sm" onclick="theyScore()">+ Their Point</button>
+      <div class="card-title">Score Point</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-green btn-full" onclick="weScore()">+1 Us</button>
+        <button class="btn btn-red btn-full" onclick="theyScore()">+1 Them</button>
       </div>
     </div>
+
     <div class="card">
-      <div class="card-title">Point Log</div>
-      <ul class="point-log" id="point-log"></ul>
+      <div class="card-title">Point Outcome</div>
+      <div class="text-muted mb-8" style="font-size:0.75rem">Record what happened this point</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-ghost">&#127944; Goal</button>
+        <button class="btn btn-ghost">&#128257; Turnover</button>
+      </div>
     </div>
   </div>
+
+  <!-- Line Tab -->
+  <div id="live-tab-line" style="display:none">
+    <div class="line-section">
+      <div class="line-section-title">Current Line</div>
+      <div class="line-section-subtitle" id="current-gender-req">4M 3F required</div>
+      <div class="roster-grid" id="current-line-grid"></div>
+    </div>
+
+    <div class="line-section">
+      <div class="line-section-title">Next Line</div>
+      <div class="line-section-subtitle" id="next-gender-req">3M 4F required</div>
+      <div class="roster-grid" id="next-line-grid"></div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="applyNextLine()">Apply Next Line</button>
+  </div>
+
+  <!-- Log Tab -->
+  <div id="live-tab-log" style="display:none">
+    <div class="card">
+      <div class="card-title">Game Log</div>
+      <ul class="point-log" id="game-log"></ul>
+    </div>
+  </div>
+
+  <button class="btn btn-red btn-full" onclick="endGame()" style="margin-top:14px;margin-bottom:24px">End Game</button>
 </div>
 
-<!-- SUMMARY -->
+<!-- SUMMARY SCREEN -->
 <div class="screen" id="screen-summary">
   <div class="flex-between" style="margin-top:16px;margin-bottom:16px">
     <div>
       <div style="font-size:1.1rem;font-weight:700">Game Summary</div>
-      <div class="text-muted">FireDiscs vs Hurricanes &middot; Mar 10, 2026</div>
+      <div class="text-muted">FireDiscs vs <span id="summary-opponent">Hurricanes</span></div>
     </div>
-    <span class="badge badge-green">W</span>
+    <span class="badge badge-green" id="win-badge">W</span>
   </div>
+
   <div class="scoreboard">
-    <div class="score-team"><div class="team-name">FireDiscs</div><div class="score us">13</div></div>
-    <div style="font-size:1.5rem;color:var(--muted)">:</div>
-    <div class="score-team"><div class="team-name">Hurricanes</div><div class="score them">9</div></div>
-  </div>
-  <div class="card">
-    <div class="flex-between mb-8">
-      <div class="card-title" style="margin-bottom:0">Player Stats</div>
-      <div class="text-muted" style="font-size:0.75rem">click header to sort</div>
+    <div class="score-team">
+      <div class="team-name">FireDiscs</div>
+      <div class="score us" id="summary-score-us">0</div>
     </div>
+    <div style="font-size:1.5rem;color:var(--muted)">:</div>
+    <div class="score-team">
+      <div class="team-name" id="summary-opponent2">Hurricanes</div>
+      <div class="score them" id="summary-score-them">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Points Played</div>
     <table class="stats-table">
       <thead><tr>
-        <th onclick="sortStats('name')">Player</th>
-        <th onclick="sortStats('goals')">G &#9660;</th>
-        <th onclick="sortStats('assists')">A</th>
-        <th onclick="sortStats('ds')">D</th>
-        <th onclick="sortStats('turns')">TO</th>
-        <th onclick="sortStats('pts')">Pts</th>
+        <th>Player</th>
+        <th>Points</th>
       </tr></thead>
-      <tbody id="stats-tbody"></tbody>
+      <tbody id="points-played-tbody"></tbody>
     </table>
   </div>
+
+  <div class="card">
+    <div class="card-title">Gender Sequence</div>
+    <div class="gender-seq" id="summary-gender-seq"></div>
+  </div>
+
   <button class="btn btn-ghost btn-full" onclick="showScreen('roster')" style="margin-bottom:24px">&#8592; Back to Roster</button>
 </div>
 
-<!-- ASSIST MODAL -->
-<div class="modal-overlay" id="assist-modal">
-  <div class="modal">
-    <h3>&#127944; Who threw the assist?</h3>
-    <p>Select the player who threw to the scorer</p>
-    <div class="assist-grid" id="assist-grid"></div>
-    <div class="divider"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeAssist()">Cancel</button>
-      <button class="btn btn-green" style="flex:1" onclick="recordGoal(null)">No Assist</button>
-    </div>
-  </div>
-</div>
-
-<!-- END GAME MODAL -->
-<div class="modal-overlay" id="endgame-modal">
-  <div class="modal">
-    <h3>End Game?</h3>
-    <p>This will finalize the game. Current score: <strong id="modal-score"></strong></p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeEndGame()">Cancel</button>
-      <button class="btn btn-red" style="flex:1" onclick="confirmEndGame()">End Game</button>
-    </div>
-  </div>
-</div>
-
-<div class="float-btn" id="float-end-btn" style="display:none">
-  <button class="btn btn-red" onclick="openEndGame()">End Game</button>
-</div>
-
 <script>
-const PLAYERS = [
-  { id:1,  name:'Alex',   jersey:7,  gender:'M', line:1, buddies:[2,3] },
-  { id:2,  name:'Jordan', jersey:11, gender:'F', line:1, buddies:[1,5] },
-  { id:3,  name:'Sam',    jersey:4,  gender:'M', line:1, buddies:[1,6] },
-  { id:4,  name:'Casey',  jersey:9,  gender:'F', line:1, buddies:[7,8] },
-  { id:5,  name:'Morgan', jersey:22, gender:'M', line:2, buddies:[2,9] },
-  { id:6,  name:'Taylor', jersey:15, gender:'F', line:2, buddies:[3,10] },
-  { id:7,  name:'Riley',  jersey:3,  gender:'M', line:2, buddies:[4,11] },
-  { id:8,  name:'Quinn',  jersey:8,  gender:'F', line:2, buddies:[4,12] },
-  { id:9,  name:'Drew',   jersey:17, gender:'M', line:3, buddies:[5,13] },
-  { id:10, name:'Blake',  jersey:6,  gender:'F', line:3, buddies:[6,14] },
-  { id:11, name:'Avery',  jersey:21, gender:'M', line:3, buddies:[7,12] },
-  { id:12, name:'Parker', jersey:14, gender:'F', line:3, buddies:[8,11] },
-  { id:13, name:'Reese',  jersey:5,  gender:'M', line:1, buddies:[9,1] },
-  { id:14, name:'Skyler', jersey:19, gender:'F', line:2, buddies:[10,2] },
+// STATE
+let roster = [
+  { id:1,  name:'Alex',   number:7,  gender:'M' },
+  { id:2,  name:'Jordan', number:11, gender:'F' },
+  { id:3,  name:'Sam',    number:4,  gender:'M' },
+  { id:4,  name:'Casey',  number:9,  gender:'F' },
+  { id:5,  name:'Morgan', number:22, gender:'M' },
+  { id:6,  name:'Taylor', number:15, gender:'F' },
+  { id:7,  name:'Riley',  number:3,  gender:'M' },
+  { id:8,  name:'Quinn',  number:8,  gender:'F' },
+  { id:9,  name:'Drew',   number:17, gender:'M' },
+  { id:10, name:'Blake',  number:6,  gender:'F' },
+  { id:11, name:'Avery',  number:21, gender:'M' },
+  { id:12, name:'Parker', number:14, gender:'F' },
+  { id:13, name:'Reese',  number:5,  gender:'M' },
+  { id:14, name:'Skyler', number:19, gender:'F' },
 ];
 
-const GENDER_SEQ = {
-  ABBA:  ['M','M','F','F','M','M','F','F'],
-  ALT:   ['M','F','M','F','M','F','M','F'],
-  FIXED: ['M','M','M','M','M','F','F','F'],
+let nextId = 15;
+let newPlayerGender = 'M';
+
+let squad = []; // player IDs in this game
+let startingLine = []; // player IDs for first point
+let currentLine = []; // player IDs on field now
+let nextLine = []; // player IDs for next point
+
+let gameConfig = {
+  opponent: 'Hurricanes',
+  startOffense: true,
+  genderRatio: '3M4F',
+  sequenceType: 'ABBA',
+  abbaAisFemale: false
 };
 
-const SUMMARY_STATS = [
-  { name:'Alex #7',    gender:'M', goals:4, assists:3, ds:2, turns:1, pts:12 },
-  { name:'Jordan #11', gender:'F', goals:3, assists:5, ds:1, turns:2, pts:13 },
-  { name:'Sam #4',     gender:'M', goals:2, assists:2, ds:4, turns:0, pts:11 },
-  { name:'Casey #9',   gender:'F', goals:2, assists:1, ds:3, turns:1, pts:10 },
-  { name:'Morgan #22', gender:'M', goals:1, assists:4, ds:2, turns:3, pts:9  },
-  { name:'Taylor #15', gender:'F', goals:1, assists:2, ds:0, turns:1, pts:8  },
-  { name:'Riley #3',   gender:'M', goals:0, assists:1, ds:5, turns:2, pts:10 },
-  { name:'Quinn #8',   gender:'F', goals:0, assists:1, ds:1, turns:0, pts:7  },
-];
+let pointsPlayed = {}; // {playerId: count}
+let genderSeq = []; // array of required gender for each point
+let gameLog = [];
+let scoreUs = 0;
+let scoreThem = 0;
+let currentPointNum = 1;
 
-let selectedIds = new Set();
-let activeId = null;
-let lineupIds = [1,2,3,4,5,6,7];
-let scoreUs = 7, scoreThem = 6, pointNum = 9;
-let pointLog = [];
-let ratio = 'ABBA';
-let setupLines = {};
-let sortCol = 'goals', sortDir = 'desc';
-
-PLAYERS.forEach(p => { setupLines[p.id] = p.line; });
-lineupIds.forEach(id => selectedIds.add(id));
-
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-  ['roster','setup','live','summary'].forEach((s,i) => {
-    if (s === name) document.querySelectorAll('.demo-tab')[i].classList.add('active');
-  });
-  const labels = { roster:'FireDiscs', setup:'New Game', live:'vs Hurricanes', summary:'Game Summary' };
-  document.getElementById('breadcrumb').innerHTML = '<span>' + labels[name] + '</span>';
-  document.getElementById('float-end-btn').style.display = name === 'live' ? 'block' : 'none';
-  if (name === 'roster')  renderRoster();
-  if (name === 'setup')   renderSetup();
-  if (name === 'live')    renderLive();
-  if (name === 'summary') renderSummary();
+// HELPER FUNCTIONS
+function getPlayer(id) {
+  return roster.find(p => p.id === id);
 }
 
+function isInSquad(id) {
+  return squad.includes(id);
+}
+
+function getGenderRequirement(pointIndex) {
+  if (!genderSeq[pointIndex]) return gameConfig.genderRatio;
+  return genderSeq[pointIndex];
+}
+
+function parseGenderReq(req) {
+  // "4M3F" -> {M: 4, F: 3}
+  const match = req.match(/(\d+)M(\d+)F/);
+  if (match) return { M: parseInt(match[1]), F: parseInt(match[2]) };
+  return { M: 3, F: 4 }; // default
+}
+
+function checkLineValid(lineIds, req) {
+  const counts = { M: 0, F: 0, X: 0 };
+  lineIds.forEach(id => {
+    const p = getPlayer(id);
+    if (p) counts[p.gender]++;
+  });
+  const needed = parseGenderReq(req);
+  return counts.M === needed.M && counts.F === needed.F;
+}
+
+function getSuggestedPlayers(lineIds, req, excludeIds = []) {
+  const needed = parseGenderReq(req);
+  const current = { M: 0, F: 0 };
+  lineIds.forEach(id => {
+    const p = getPlayer(id);
+    if (p) current[p.gender]++;
+  });
+
+  const suggestions = [];
+  squad.forEach(id => {
+    if (lineIds.includes(id) || excludeIds.includes(id)) return;
+    const p = getPlayer(id);
+    if (!p) return;
+    
+    const genderNeeded = needed.M > current.M ? 'M' : (needed.F > current.F ? 'F' : null);
+    if (p.gender === genderNeeded) {
+      const played = pointsPlayed[id] || 0;
+      suggestions.push({ id, played });
+    }
+  });
+
+  suggestions.sort((a, b) => a.played - b.played);
+  return suggestions.slice(0, Math.max(needed.M - current.M, needed.F - current.F));
+}
+
+function generateGenderSequence() {
+  genderSeq = [];
+  const { sequenceType, genderRatio, abbaAisFemale } = gameConfig;
+  
+  if (sequenceType === 'MANUAL') {
+    for (let i = 0; i < 20; i++) genderSeq.push(genderRatio);
+    return;
+  }
+
+  if (sequenceType === 'ABBA') {
+    const A = abbaAisFemale ? '3M4F' : '4M3F';
+    const B = abbaAisFemale ? '4M3F' : '3M4F';
+    const pattern = [A, B, B, A];
+    for (let i = 0; i < 20; i++) {
+      genderSeq.push(pattern[i % 4]);
+    }
+  } else if (sequenceType === 'ALT') {
+    for (let i = 0; i < 20; i++) {
+      genderSeq.push(i % 2 === 0 ? '4M3F' : '3M4F');
+    }
+  }
+}
+
+// ROSTER SCREEN
 function renderRoster() {
-  const g = document.getElementById('roster-grid');
-  g.innerHTML = '';
-  PLAYERS.forEach(p => {
-    const d = document.createElement('div');
-    d.className = 'player-chip ' + (p.gender === 'M' ? 'male' : 'female');
-    d.innerHTML = '<div class="jersey">#' + p.jersey + '</div><div class="name">' + p.name + '</div><div class="line-badge">L' + p.line + '</div>';
-    g.appendChild(d);
+  const grid = document.getElementById('roster-grid');
+  grid.innerHTML = '';
+  roster.forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = `player-chip ${p.gender === 'M' ? 'male' : 'female'}`;
+    chip.innerHTML = `
+      <div class="jersey">#${p.number}</div>
+      <div class="name">${p.name}</div>
+    `;
+    chip.onclick = () => deletePlayer(p.id);
+    grid.appendChild(chip);
   });
+  document.getElementById('roster-count').textContent = roster.length;
 }
 
-function renderSetup() {
-  renderGenderSeq();
-  const g = document.getElementById('setup-roster-grid');
-  g.innerHTML = '';
-  PLAYERS.forEach(p => {
-    const line = setupLines[p.id];
-    const d = document.createElement('div');
-    d.className = 'player-chip ' + (p.gender === 'M' ? 'male' : 'female');
-    d.innerHTML = '<div class="jersey">#' + p.jersey + '</div><div class="name">' + p.name + '</div><div class="line-badge">' + (line ? 'L' + line : '--') + '</div>';
-    d.onclick = () => { setupLines[p.id] = setupLines[p.id] === 3 ? null : (setupLines[p.id] || 0) + 1; d.querySelector('.line-badge').textContent = setupLines[p.id] ? 'L' + setupLines[p.id] : '--'; };
-    g.appendChild(d);
+function setNewGender(g) {
+  newPlayerGender = g;
+  ['gender-m', 'gender-f', 'gender-x'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
   });
+  document.getElementById(`gender-${g.toLowerCase()}`).classList.add('active');
 }
 
-function togglePossession(v) {
-  document.getElementById('tog-offense').classList.toggle('active', v === 'O');
-  document.getElementById('tog-defense').classList.toggle('active', v === 'D');
+function addPlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  const number = parseInt(document.getElementById('new-player-number').value);
+  if (!name || !number) return alert('Please enter name and number');
+  
+  roster.push({ id: nextId++, name, number, gender: newPlayerGender });
+  document.getElementById('new-player-name').value = '';
+  document.getElementById('new-player-number').value = '';
+  renderRoster();
 }
 
-function toggleRatio(v) {
-  ratio = v;
-  ['abba','alt','fixed'].forEach(r => document.getElementById('tog-' + r).classList.toggle('active', r === v.toLowerCase()));
-  renderGenderSeq();
+function deletePlayer(id) {
+  if (!confirm('Delete this player?')) return;
+  roster = roster.filter(p => p.id !== id);
+  squad = squad.filter(pid => pid !== id);
+  renderRoster();
 }
 
-function renderGenderSeq() {
-  const seq = GENDER_SEQ[ratio];
+// SETUP SCREEN
+let currentSetupTab = 'squad';
+
+function showSetupTab(tab) {
+  currentSetupTab = tab;
+  ['squad', 'format', 'line'].forEach(t => {
+    document.getElementById(`setup-tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.sub-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['squad', 'format', 'line'][i] === tab);
+  });
+  
+  if (tab === 'squad') renderSquadSelector();
+  if (tab === 'format') renderGenderSeqPreview();
+  if (tab === 'line') renderStartingLineSelector();
+}
+
+function renderSquadSelector() {
+  const grid = document.getElementById('squad-selector-grid');
+  grid.innerHTML = '';
+  roster.forEach(p => {
+    const inSquad = isInSquad(p.id);
+    const chip = document.createElement('div');
+    chip.className = `player-chip ${p.gender === 'M' ? 'male' : 'female'} ${inSquad ? 'selected' : ''}`;
+    chip.innerHTML = `
+      <div class="jersey">#${p.number}</div>
+      <div class="name">${p.name}</div>
+    `;
+    chip.onclick = () => {
+      if (inSquad) {
+        squad = squad.filter(id => id !== p.id);
+      } else {
+        squad.push(p.id);
+      }
+      renderSquadSelector();
+    };
+    grid.appendChild(chip);
+  });
+  document.getElementById('squad-count').textContent = squad.length;
+}
+
+function togglePossession(type) {
+  gameConfig.startOffense = type === 'O';
+  document.getElementById('tog-offense').classList.toggle('active', type === 'O');
+  document.getElementById('tog-defense').classList.toggle('active', type === 'D');
+}
+
+function toggleGenderRatio(ratio) {
+  gameConfig.genderRatio = ratio;
+  ['4m3f', '3m4f', 'mixed'].forEach(r => {
+    document.getElementById(`tog-${r}`).classList.toggle('active', r === ratio.toLowerCase());
+  });
+  generateGenderSequence();
+  renderGenderSeqPreview();
+}
+
+function toggleSequence(type) {
+  gameConfig.sequenceType = type;
+  ['abba', 'alt', 'manual'].forEach(t => {
+    document.getElementById(`tog-${t}`).classList.toggle('active', t === type.toLowerCase());
+  });
+  document.getElementById('abba-options').style.display = type === 'ABBA' ? 'block' : 'none';
+  generateGenderSequence();
+  renderGenderSeqPreview();
+}
+
+function toggleAbbaGender() {
+  gameConfig.abbaAisFemale = document.getElementById('abba-female-checkbox').checked;
+  generateGenderSequence();
+  renderGenderSeqPreview();
+}
+
+function renderGenderSeqPreview() {
   const el = document.getElementById('gender-seq-preview');
-  if (el) el.innerHTML = seq.map((g, i) => '<div class="gender-dot ' + g + '" title="Pt ' + (i+1) + '">' + g + '</div>').join('');
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const req = genderSeq[i] || gameConfig.genderRatio;
+    const g = req.startsWith('4M') ? 'M' : 'F';
+    const dot = document.createElement('div');
+    dot.className = `gender-dot ${g}`;
+    dot.textContent = g;
+    dot.title = `Point ${i + 1}: ${req}`;
+    el.appendChild(dot);
+  }
+}
+
+function renderStartingLineSelector() {
+  const grid = document.getElementById('starting-line-grid');
+  grid.innerHTML = '';
+  
+  if (squad.length === 0) {
+    grid.innerHTML = '<div class="text-muted" style="grid-column:1/-1;text-align:center;padding:20px">No squad selected</div>';
+    return;
+  }
+
+  squad.forEach(id => {
+    const p = getPlayer(id);
+    if (!p) return;
+    const inLine = startingLine.includes(id);
+    const chip = document.createElement('div');
+    chip.className = `player-chip ${p.gender === 'M' ? 'male' : 'female'} ${inLine ? 'selected' : ''}`;
+    chip.innerHTML = `
+      <div class="jersey">#${p.number}</div>
+      <div class="name">${p.name}</div>
+    `;
+    chip.onclick = () => {
+      if (inLine) {
+        startingLine = startingLine.filter(lid => lid !== id);
+      } else if (startingLine.length < 7) {
+        startingLine.push(id);
+      }
+      renderStartingLineSelector();
+    };
+    grid.appendChild(chip);
+  });
+  document.getElementById('starting-line-count').textContent = startingLine.length;
+}
+
+function startGame() {
+  if (squad.length === 0) return alert('Please select squad members');
+  gameConfig.opponent = document.getElementById('opponent-name').value || 'Opponent';
+  generateGenderSequence();
+  
+  // Initialize points played
+  squad.forEach(id => { pointsPlayed[id] = 0; });
+  
+  // Set current line
+  if (startingLine.length === 7) {
+    currentLine = [...startingLine];
+    currentLine.forEach(id => { pointsPlayed[id] = 1; });
+  }
+  
+  scoreUs = 0;
+  scoreThem = 0;
+  currentPointNum = 1;
+  gameLog = [];
+  
+  showScreen('live');
+}
+
+// LIVE GAME SCREEN
+let currentLiveTab = 'score';
+
+function showLiveTab(tab) {
+  currentLiveTab = tab;
+  ['score', 'line', 'log'].forEach(t => {
+    document.getElementById(`live-tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#screen-live .sub-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['score', 'line', 'log'][i] === tab);
+  });
+  
+  if (tab === 'line') renderLineTab();
+  if (tab === 'log') renderGameLog();
 }
 
 function renderLive() {
-  updateScoreboard();
-  if (lineupIds.length === 7) {
-    setPhase('point');
-    renderLineup();
-  } else {
-    setPhase('selecting');
-    renderLiveRoster();
-    updateSelCount();
-  }
-  renderPointLog();
-}
-
-function setPhase(p) {
-  document.getElementById('phase-selecting').style.display = p === 'selecting' ? 'block' : 'none';
-  document.getElementById('phase-point').style.display = p === 'point' ? 'block' : 'none';
-}
-
-function updateScoreboard() {
   document.getElementById('score-us').textContent = scoreUs;
   document.getElementById('score-them').textContent = scoreThem;
-  document.getElementById('point-num').textContent = pointNum;
-  const el = document.getElementById('notif-pt'); if (el) el.textContent = pointNum;
-  const seq = GENDER_SEQ[ratio];
-  const g = seq[(pointNum - 1) % seq.length];
-  const b = document.getElementById('gender-badge');
-  if (g === 'M') { b.textContent = '4M / 3F'; b.className = 'value men'; }
-  else           { b.textContent = '3M / 4F'; b.className = 'value women'; }
+  document.getElementById('point-num').textContent = currentPointNum;
+  document.getElementById('opponent-display').textContent = gameConfig.opponent;
+  
+  const req = getGenderRequirement(currentPointNum - 1);
+  const badge = document.getElementById('gender-badge');
+  badge.textContent = req;
+  badge.className = req.startsWith('4M') ? 'value men' : 'value women';
+  
+  renderLineTab();
 }
 
-function renderLiveRoster() {
-  const g = document.getElementById('live-roster-grid');
-  if (!g) return;
-  g.innerHTML = '';
-  PLAYERS.forEach(p => {
-    const isSel = selectedIds.has(p.id);
-    const buddies = (PLAYERS.find(x => x.id === activeId) || {}).buddies || [];
-    const isBuddy = buddies.includes(p.id);
-    const d = document.createElement('div');
-    d.className = 'player-chip ' + (p.gender === 'M' ? 'male' : 'female') + (isSel ? ' selected' : '') + (isBuddy && !isSel ? ' buddy-glow' : '');
-    d.innerHTML = '<div class="jersey">#' + p.jersey + '</div><div class="name">' + p.name + '</div>';
-    d.onclick = () => {
-      if (selectedIds.has(p.id)) { selectedIds.delete(p.id); }
-      else if (selectedIds.size < 7) { selectedIds.add(p.id); activeId = p.id; }
-      renderLiveRoster();
-      document.getElementById('start-point-btn').disabled = selectedIds.size !== 7;
-    };
-    g.appendChild(d);
-  });
-  updateSelCount();
+function renderLineTab() {
+  const currentReq = getGenderRequirement(currentPointNum - 1);
+  const nextReq = getGenderRequirement(currentPointNum);
+  
+  document.getElementById('current-gender-req').textContent = `${currentReq} required`;
+  document.getElementById('next-gender-req').textContent = `${nextReq} required`;
+  
+  renderLineGrid('current-line-grid', currentLine, currentReq);
+  renderLineGrid('next-line-grid', nextLine, nextReq);
 }
 
-function updateSelCount() {
-  const el = document.getElementById('sel-count'); if (el) el.textContent = selectedIds.size;
-  const btn = document.getElementById('start-point-btn'); if (btn) btn.disabled = selectedIds.size !== 7;
-}
-
-function startPoint() {
-  lineupIds = Array.from(selectedIds);
-  setPhase('point');
-  renderLineup();
-  pointLog = [];
-  renderPointLog();
-  activeId = null;
-  resetActions();
-  const p = PLAYERS.find(x => x.id === lineupIds[0]);
-  const el = document.getElementById('disc-pos'); if (el && p) el.textContent = 'Disc: ' + p.name + ' #' + p.jersey;
-}
-
-function renderLineup() {
-  const g = document.getElementById('lineup-grid');
-  if (!g) return;
-  g.innerHTML = '';
-  lineupIds.forEach(pid => {
-    const p = PLAYERS.find(x => x.id === pid);
+function renderLineGrid(gridId, lineIds, req) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = '';
+  
+  const suggestions = getSuggestedPlayers(lineIds, req);
+  const suggestedIds = suggestions.map(s => s.id);
+  
+  squad.forEach(id => {
+    const p = getPlayer(id);
     if (!p) return;
-    const d = document.createElement('div');
-    d.className = 'lineup-slot' + (activeId === pid ? ' active-player' : '');
-    d.innerHTML = '<div class="slot-jersey">#' + p.jersey + '</div><div class="slot-name">' + p.name + '</div>';
-    d.onclick = () => {
-      activeId = pid;
-      renderLineup();
-      document.getElementById('action-player-name').textContent = p.name + ' #' + p.jersey;
-      ['btn-d','btn-turn','btn-score'].forEach(id => document.getElementById(id).disabled = false);
+    const inLine = lineIds.includes(id);
+    const suggested = suggestedIds.includes(id) && !inLine;
+    const played = pointsPlayed[id] || 0;
+    
+    const chip = document.createElement('div');
+    chip.className = `player-chip ${p.gender === 'M' ? 'male' : 'female'} ${inLine ? 'selected' : ''} ${suggested ? 'suggested' : ''}`;
+    chip.innerHTML = `
+      <div class="jersey">#${p.number}</div>
+      <div class="name">${p.name}</div>
+      ${played > 0 ? `<div class="points-badge">${played}</div>` : ''}
+    `;
+    chip.onclick = () => {
+      if (gridId === 'current-line-grid') {
+        if (inLine) {
+          currentLine = currentLine.filter(lid => lid !== id);
+        } else if (currentLine.length < 7) {
+          currentLine.push(id);
+        }
+      } else {
+        if (inLine) {
+          nextLine = nextLine.filter(lid => lid !== id);
+        } else if (nextLine.length < 7) {
+          nextLine.push(id);
+        }
+      }
+      renderLineGrid(gridId, gridId === 'current-line-grid' ? currentLine : nextLine, req);
     };
-    g.appendChild(d);
+    grid.appendChild(chip);
   });
-  if (lineupIds.length < 8) {
-    const e = document.createElement('div'); e.className = 'lineup-slot empty'; e.textContent = '+'; g.appendChild(e);
-  }
 }
 
-function resetActions() {
-  ['btn-d','btn-turn','btn-score'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
-  const el = document.getElementById('action-player-name'); if (el) el.textContent = '-- select a player --';
+function applyNextLine() {
+  if (nextLine.length !== 7) return alert('Next line must have 7 players');
+  currentLine = [...nextLine];
+  nextLine = [];
+  renderLineTab();
+  alert('Next line applied to current line');
 }
 
-function recordAction(type) {
-  if (!activeId) return;
-  const p = PLAYERS.find(x => x.id === activeId);
-  const cls = type === 'D' ? 'd' : 'turn';
-  const icon = type === 'D' ? '&#128737;' : '&#128257;';
-  pointLog.push({ icon, cls, text: p.name + ' #' + p.jersey + ' -- ' + type });
-  renderPointLog();
-  activeId = null; renderLineup(); resetActions();
-}
-
-function openAssist() {
-  if (!activeId) return;
-  const g = document.getElementById('assist-grid');
-  g.innerHTML = '';
-  lineupIds.filter(pid => pid !== activeId).forEach(pid => {
-    const p = PLAYERS.find(x => x.id === pid);
-    const d = document.createElement('div');
-    d.className = 'assist-chip';
-    d.innerHTML = '<div style="font-weight:700">#' + p.jersey + '</div><div>' + p.name + '</div>';
-    d.onclick = () => recordGoal(pid);
-    g.appendChild(d);
+function weScore() {
+  scoreUs++;
+  currentLine.forEach(id => {
+    pointsPlayed[id] = (pointsPlayed[id] || 0) + 1;
   });
-  document.getElementById('assist-modal').classList.add('open');
-}
-
-function closeAssist() { document.getElementById('assist-modal').classList.remove('open'); }
-
-function recordGoal(assistId) {
-  closeAssist();
-  const scorer = PLAYERS.find(x => x.id === activeId);
-  let text = scorer.name + ' #' + scorer.jersey + ' scored!';
-  if (assistId) { const a = PLAYERS.find(x => x.id === assistId); text += ' (assist: ' + a.name + ' #' + a.jersey + ')'; }
-  pointLog.push({ icon: '&#127944;', cls: 'goal', text });
-  scoreUs++; pointNum++;
-  renderPointLog(); updateScoreboard();
-  activeId = null; selectedIds = new Set(); lineupIds = [];
-  setTimeout(() => { setPhase('selecting'); renderLiveRoster(); updateSelCount(); resetActions(); pointLog = []; renderPointLog(); }, 1200);
+  gameLog.push({ type: 'goal', text: `Point ${currentPointNum}: We scored! (${scoreUs}-${scoreThem})` });
+  currentPointNum++;
+  currentLine = [];
+  renderLive();
 }
 
 function theyScore() {
-  scoreThem++; pointNum++;
-  pointLog.push({ icon: '&#10060;', cls: 'score', text: 'Hurricanes scored' });
-  updateScoreboard(); renderPointLog();
-  activeId = null; selectedIds = new Set(); lineupIds = [];
-  setTimeout(() => { setPhase('selecting'); renderLiveRoster(); updateSelCount(); resetActions(); pointLog = []; renderPointLog(); }, 1200);
-}
-
-function renderPointLog() {
-  const ul = document.getElementById('point-log');
-  if (!ul) return;
-  if (!pointLog.length) { ul.innerHTML = '<li style="color:var(--muted);font-size:0.8rem">No events yet</li>'; return; }
-  ul.innerHTML = pointLog.map(e => '<li><div class="event-icon ' + e.cls + '">' + e.icon + '</div><span>' + e.text + '</span></li>').join('');
-}
-
-function openEndGame() {
-  document.getElementById('modal-score').textContent = scoreUs + ' - ' + scoreThem;
-  document.getElementById('endgame-modal').classList.add('open');
-}
-function closeEndGame() { document.getElementById('endgame-modal').classList.remove('open'); }
-function confirmEndGame() { closeEndGame(); showScreen('summary'); }
-
-function renderSummary() {
-  let data = [...SUMMARY_STATS];
-  data.sort((a, b) => {
-    if (typeof a[sortCol] === 'string') return sortDir === 'desc' ? b[sortCol].localeCompare(a[sortCol]) : a[sortCol].localeCompare(b[sortCol]);
-    return sortDir === 'desc' ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol];
+  scoreThem++;
+  currentLine.forEach(id => {
+    pointsPlayed[id] = (pointsPlayed[id] || 0) + 1;
   });
-  document.getElementById('stats-tbody').innerHTML = data.map(p => {
-    const c = p.gender === 'M' ? '#93c5fd' : '#f9a8d4';
-    return '<tr><td style="color:' + c + ';font-weight:600">' + p.name + '</td><td class="highlight">' + p.goals + '</td><td>' + p.assists + '</td><td>' + p.ds + '</td><td>' + p.turns + '</td><td>' + p.pts + '</td></tr>';
-  }).join('');
+  gameLog.push({ type: 'score', text: `Point ${currentPointNum}: They scored (${scoreUs}-${scoreThem})` });
+  currentPointNum++;
+  currentLine = [];
+  renderLive();
 }
 
-function sortStats(col) {
-  if (sortCol === col) sortDir = sortDir === 'desc' ? 'asc' : 'desc';
-  else { sortCol = col; sortDir = 'desc'; }
-  renderSummary();
+function renderGameLog() {
+  const log = document.getElementById('game-log');
+  if (!log) return;
+  
+  if (gameLog.length === 0) {
+    log.innerHTML = '<li class="text-muted">No events yet</li>';
+    return;
+  }
+  
+  log.innerHTML = gameLog.map(e => {
+    const iconClass = e.type === 'goal' ? 'goal' : 'score';
+    const icon = e.type === 'goal' ? '&#127944;' : '&#10060;';
+    return `<li><div class="event-icon ${iconClass}">${icon}</div><span>${e.text}</span></li>`;
+  }).reverse().join('');
+}
+
+function endGame() {
+  if (!confirm('End game and view summary?')) return;
+  showScreen('summary');
+}
+
+// SUMMARY SCREEN
+function renderSummary() {
+  document.getElementById('summary-opponent').textContent = gameConfig.opponent;
+  document.getElementById('summary-opponent2').textContent = gameConfig.opponent;
+  document.getElementById('summary-score-us').textContent = scoreUs;
+  document.getElementById('summary-score-them').textContent = scoreThem;
+  
+  const badge = document.getElementById('win-badge');
+  if (scoreUs > scoreThem) {
+    badge.textContent = 'W';
+    badge.className = 'badge badge-green';
+  } else {
+    badge.textContent = 'L';
+    badge.className = 'badge';
+    badge.style.background = 'rgba(239,68,68,0.2)';
+    badge.style.color = 'var(--red)';
+    badge.style.border = '1px solid var(--red)';
+  }
+  
+  // Points played table
+  const tbody = document.getElementById('points-played-tbody');
+  const sorted = squad.map(id => {
+    const p = getPlayer(id);
+    return { player: p, points: pointsPlayed[id] || 0 };
+  }).sort((a, b) => b.points - a.points);
+  
+  tbody.innerHTML = sorted.map(item => {
+    const color = item.player.gender === 'M' ? '#93c5fd' : '#f9a8d4';
+    return `<tr>
+      <td style="color:${color};font-weight:600">${item.player.name} #${item.player.number}</td>
+      <td class="highlight">${item.points}</td>
+    </tr>`;
+  }).join('');
+  
+  // Gender sequence
+  const seqEl = document.getElementById('summary-gender-seq');
+  seqEl.innerHTML = '';
+  for (let i = 0; i < currentPointNum - 1; i++) {
+    const req = genderSeq[i] || gameConfig.genderRatio;
+    const g = req.startsWith('4M') ? 'M' : 'F';
+    const dot = document.createElement('div');
+    dot.className = `gender-dot ${g}`;
+    dot.textContent = g;
+    dot.title = `Point ${i + 1}: ${req}`;
+    seqEl.appendChild(dot);
+  }
+}
+
+// SCREEN MANAGEMENT
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-tabs .demo-tab').forEach(t => t.classList.remove('active'));
+  
+  document.getElementById('screen-' + name).classList.add('active');
+  const tabIndex = ['roster', 'setup', 'live', 'summary'].indexOf(name);
+  if (tabIndex >= 0) {
+    document.querySelectorAll('.demo-tabs .demo-tab')[tabIndex].classList.add('active');
+  }
+  
+  const labels = { roster: 'FireDiscs', setup: 'New Game', live: 'Live Game', summary: 'Game Summary' };
+  document.getElementById('breadcrumb').innerHTML = '<span>' + labels[name] + '</span>';
+  
+  if (name === 'roster') renderRoster();
+  if (name === 'setup') showSetupTab('squad');
+  if (name === 'live') { renderLive(); showLiveTab('score'); }
+  if (name === 'summary') renderSummary();
 }
 
 // INIT
+generateGenderSequence();
 renderRoster();
-renderGenderSeq();
-pointLog = [
-  { icon:'&#128737;', cls:'d',   text:'Riley #3 -- D' },
-  { icon:'&#128257;', cls:'turn', text:'Alex #7 -- Turnover' },
-];
 </script>
 </body>
 </html>
